@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Segment Intersection</title>
+    <style>
+        body{
+            margin:0;
+            overflow: hidden;
+            background: lightgray;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="myCanvas"></canvas>
+    <script>
+
+myCanvas.width=window.innerWidth;
+myCanvas.height=window.innerHeight;
+
+const A={x:200,y:150};
+const B={x:150,y:250};
+const C={x:50,y:100};
+const D={x:250,y:200};
+
+const ctx=myCanvas.getContext("2d");
+let angle =0;
+const mouse = {x:0,y:0};
+document.onmousemove=(event)=>{
+    mouse.x=event.x;
+    mouse.y=event.y;
+}
+
+animate();
+
+function animate(){
+    const radius = 50;
+    A.x=mouse.x+Math.cos(angle)*radius;
+    A.y=mouse.y-Math.sin(angle)*radius;
+    B.x=mouse.x-Math.cos(angle)*radius;
+    B.y=mouse.y+Math.sin(angle)*radius;
+    angle+=0.02;
+    ctx.clearRect(0,0,myCanvas.width,myCanvas.height);
+    ctx.beginPath();
+    ctx.moveTo(A.x,A.y);
+    ctx.lineTo(B.x,B.y);
+    ctx.moveTo(C.x,C.y);
+    ctx.lineTo(D.x,D.y);
+    ctx.stroke();
+
+    drawDot(A,"A");
+    drawDot(B,"B");
+    drawDot(C,"C");
+    drawDot(D,"D");
+
+    const I = getIntersection(A,B,C,D);
+    if(I){
+        drawDot(I,"I");
+    }
+
+    // ctx.beginPath();
+    // ctx.rect(myCanvas.width/2,0,I.bottom/100,10);
+    // ctx.fill();
+    requestAnimationFrame(animate);
+}
+
+function getIntersection(A,B,C,D){
+/*
+
+    Ix = Ax+(Bx-Ax)t = Cx+(Dx-Cx)u
+    Iy = Ay+(By-Ay)y = Cy+(Dy-Cy)u
+
+    (Ax-Cx)+(Bx-Ax)t = (Dx-Cx)u ---- Eq-1
+    (Ay-Cy)+(By-Ay)y = (Dy-Cy)u ---- Eq-2
+
+    
+    We want u = ? (eliminate t)
+
+    uTop = (Cy-Ay)(Ax-Bx) - (Cx-Ax)(Ay-By)
+    uBottom = (Dy-Cy)(Bx-Ax) - (Dx-Cx)(By-Ay)
+    u = uTop / uBottom
+    
+
+    We want t = ? (eliminate u)
+
+    tTop = (Dx-Cx)(Ay-Cy) - (Dy-Cy)(Ax-Cx)
+    tBottom = (Dy-Cy)(Bx-Ax) - (Dx-Cx)(By-Ay)
+    t = tTop / tBottom
+
+    Also ... try to check bottom != 0
+
+*/
+    const uTop = (C.y-A.y)*(A.x-B.x) - (C.x-A.x)*(A.y-B.y)
+    const tTop = (D.x-C.x)*(A.y-C.y) - (D.y-C.y)*(A.x-C.x);
+    const bottom = (D.y-C.y)*(B.x-A.x) - (D.x-C.x)*(B.y-A.y);
+    if(bottom!=0){
+        const u = uTop / bottom;
+        const t = tTop / bottom;
+        if(t>0 && t<=1 && u>=0 && u<= 1){
+            return {
+                x:lerp(A.x,B.x,t),
+                y:lerp(A.y,B.y,t),
+                offset:t,
+            }
+        }
+    }
+    return null;
+    
+}
+
+
+function lerp(A,B,t){
+    return A+(B-A)*t;
+}
+
+function drawDot(point,lable, isRed){
+    ctx.beginPath();
+    ctx.fillStyle=isRed?"red":"white";
+    ctx.arc(point.x,point.y,10,0,Math.PI*2);
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle="black";
+    ctx.textAlign="center";
+    ctx.textBaseline="middle";
+    ctx.font="bold 14px Arial";
+    ctx.fillText(lable,point.x,point.y);
+}
+    </script>
+</body>
+</html>
